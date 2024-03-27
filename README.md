@@ -68,7 +68,7 @@ The 'Forecasting Library' directory contains the main code files used for foreca
 
 The 'Quantile_Forecasting_DAM&BM.ipynb' notebook serves as the main file for running different forecasting models. It imports and utilizes the functions defined in the Python scripts mentioned above.
 
-### Trading Strategies
+### Quantile Trading Strategies
 - Single_Trade.py: Python script containing functions related to Single trade strategy for the DAM and BM.]
 - Multi_Trade.py: Python script containing functions related to Single trade strategy for the DAM and BM.
 - High_Frequency.py: Python script containing functions related to High Frequency Trading strategy for the DAM and BM.
