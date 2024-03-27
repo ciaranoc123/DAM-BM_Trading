@@ -54,20 +54,25 @@ The variation in time intervals for historical data is due to availability, limi
 
 
 ## Purpose
-The purpose of this project is to analyze and compare different forecasting models for both the DAM and BM markets, aiming to improve price forecasting accuracy.
+The purpose of this project is to analyze and compare different trading strategies of varying frequency in both the DAM and BM.
 
 ## Code
 
 ### Forecasting Library
 
 The 'Forecasting Library' directory contains the main code files used for forecasting. Below is a list of files included:
-
-- BM Forecasting.ipynb: This is the main notebook file containing code for running different forecasting models.
-
+- Quantile_Forecasting_DAM&BM.ipynb: This is the main notebook file containing code for running different forecasting models.
 - Modelling_Functions_LEAR.py: Python script containing functions related to Linear Regression modeling.
-- Modelling_Functions_ARIMA.py: Python script containing functions related to ARIMA modeling.
-- Modelling_Functions_SVR_XGB_RF.py: Python script containing functions related to Support Vector Regression, XGBoost, and Random Forest modeling.
-- Modelling_Functions_SH_DNN.py: Python script containing functions related to Single-Head Deep Neural Network modeling.
-- Modelling_Functions_MH_DNN.py: Python script containing functions related to Multi-Head Deep Neural Network modeling.
+- Modelling_Functions_LGBM_RF.py: Python script containing functions related to Light Gradient Boosting Machines, and Random Forest modeling.
+- Modelling_Functions_DNN.py: Python script containing functions related to Multi-Head Deep Neural Network modeling.
 
-The 'BM Forecasting.ipynb' notebook serves as the main file for running different forecasting models. It imports and utilizes the functions defined in the Python scripts mentioned above.
+The 'Quantile_Forecasting_DAM&BM.ipynb' notebook serves as the main file for running different forecasting models. It imports and utilizes the functions defined in the Python scripts mentioned above.
+
+### Trading Strategies
+- Single_Trade.py: Python script containing functions related to Single trade strategy for the DAM and BM.]
+- Multi_Trade.py: Python script containing functions related to Single trade strategy for the DAM and BM.
+- High_Frequency.py: Python script containing functions related to High Frequency Trading strategy for the DAM and BM.
+- Trading_Strategies.ipynb: This is the main notebook file containing code for the single trade, multi trade and high frequency trading strategies in both the DAM and BM.
+
+
+
