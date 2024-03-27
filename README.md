@@ -61,9 +61,9 @@ The purpose of this project is to analyze and compare different trading strategi
 
 ## Code
 
-### Forecasting Library
+### Quantile Forecasting Library
 
-The 'Forecasting Library' directory contains the main code files used for forecasting. Below is a list of files included:
+The 'Quantile Regression Library' directory contains the main code files used for forecasting. Below is a list of files included:
 - Quantile_Forecasting_DAM&BM.ipynb: This is the main notebook file containing code for running different forecasting models.
 - Modelling_Functions_LEAR.py: Python script containing functions related to Linear Regression modeling.
 - Modelling_Functions_LGBM_RF.py: Python script containing functions related to Light Gradient Boosting Machines, and Random Forest modeling.
