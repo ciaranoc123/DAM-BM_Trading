@@ -56,6 +56,9 @@ The variation in time intervals for historical data is due to availability, limi
 ## Purpose
 The purpose of this project is to analyze and compare different trading strategies of varying frequency in both the DAM and BM.
 
+## Results
+- Results for all DAM and BM quantile forecasts can be found in the DAM and BM folder. These can be used to test the trading strategies code.
+
 ## Code
 
 ### Forecasting Library
