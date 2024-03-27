@@ -74,10 +74,11 @@ The 'Quantile_Forecasting_DAM&BM.ipynb' notebook serves as the main file for run
 ### Quantile Trading Strategies
 This repository contains Python scripts and a Jupyter notebook implementing various quantile trading strategies for both the Day-Ahead Market (DAM) and Balancing Market (BM).
 
-- Single_Trade.py: Python script with functions related to the Single Trade strategy for both the DAM and BM.
-- Multi_Trade.py: Python script with functions related to the Multi-Trade strategy for both the DAM and BM.
-- High_Frequency.py: Python script with functions related to the High-Frequency Trading strategy for both the DAM and BM.
-- Trading_Strategies.ipynb: This Jupyter notebook serves as the main file, containing code for implementing and analyzing the Single Trade, Multi-Trade, and High-Frequency Trading strategies in both the DAM and BM markets.
+- Single_Trade.py: Python script with functions related to the Single Trade strategy (TS1) for both the DAM and BM.
+- Multi_Trade.py: Python script with functions related to the Multi-Trade strategy (TS2) for both the DAM and BM.
+- High_Frequency.py: Python script with functions related to the High-Frequency Trading strategy (TS3) for both the DAM and BM.
+- Dual_Strategy.py: Python script containing functions related to the Dual Strategy (TS3-DUAL), which combines elements from both the DAM and BM trading strategies. This file includes functions for loading data, processing prices, implementing the dual strategy, calculating trading results, and printing results.
+- Trading_Strategies.ipynb: This Jupyter notebook serves as the main file, containing code for implementing and analyzing the Single Trade, Multi-Trade, High-Frequency, and Dual-Strategy Trading strategies in both the DAM and BM markets.
   
 These scripts and the notebook provide tools for implementing and experimenting with different trading strategies, allowing for analysis and comparison of their performance in both market contexts.
 
