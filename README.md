@@ -64,12 +64,12 @@ The purpose of this project is to analyze and compare different trading strategi
 ### Quantile Forecasting Library
 
 The 'Quantile Regression Library' directory contains the main code files used for forecasting. Below is a list of files included:
-- Quantile_Forecasting_DAM&BM.ipynb: This is the main notebook file containing code for running different forecasting models.
-- Modelling_Functions_LEAR.py: Python script containing functions related to Linear Regression modeling.
-- Modelling_Functions_LGBM_RF.py: Python script containing functions related to Light Gradient Boosting Machines, and Random Forest modeling.
-- Modelling_Functions_DNN.py: Python script containing functions related to Multi-Head Deep Neural Network modeling.
+- Quantile Regression DAM BM.ipynb: This is the main notebook file containing code for running different forecasting models.
+- LEAR_QR_DAM_BM.py: Python script containing functions related to LEAR Model.
+- RF_LGBM_QR_DAM_BM.py: Python script containing functions related to Light Gradient Boosting Machines, and Random Forest Models Implementation.
+- DNN_QR_DAM_BM.py: Python script containing functions related to Multi-Head Deep Neural Network modeling.
 
-The 'Quantile_Forecasting_DAM&BM.ipynb' notebook serves as the main file for running different forecasting models. It imports and utilizes the functions defined in the Python scripts mentioned above.
+The 'Quantile Regression DAM BM.ipynb' notebook serves as the main file for generating Quantile Forecasts. It imports and utilizes the functions defined in the Python scripts mentioned above.
 
 ### Quantile Trading Strategies
 This repository contains Python scripts and a Jupyter notebook implementing various quantile trading strategies for both the Day-Ahead Market (DAM) and Balancing Market (BM).
