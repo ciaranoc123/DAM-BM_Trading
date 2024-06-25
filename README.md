@@ -2,6 +2,7 @@
 
 This repository contains code and datasets used for forecasting in both the Day-Ahead (DAM) market and the balancing market (BM).
 Access to the full datasets can be found at: [Google Drive Link](https://drive.google.com/drive/u/0/folders/1GSJhwvhRZ5X5A0uJRZzkzCuJ8xu9kDcX)
+Anyone wisihing to use the dataset should cite our paper 'Electricity Price Forecasting in the Irish Balancing Market' that can be found at https://www.sciencedirect.com/science/article/pii/S2211467X24001433
 
 ### Balancing Market
 
