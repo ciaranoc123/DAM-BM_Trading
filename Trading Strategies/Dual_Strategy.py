@@ -137,164 +137,213 @@ def load_dam_data_DS(dam_csv_path):
 # Simulate a charging or discharging operation based on price indexes.
 # The bottleneck-controlled strategy is applied to maximize profit while considering battery constraints.
 # Adjust charging or discharging dynamically based on the order of minimum and maximum price periods.
-def process_prices_DAM(charge_level, capacity, ramp_rate, min_charge_level, eff_1, eff_2, prices, current_df, min_price_index, max_price_index):
-    # Check the price indices and execute trading strategies accordingly.
+def process_prices_BM(charge_level, capacity, ramp_rate_BM, min_charge_level, eff_1, eff_2, prices, current_df_bm, min_price_index, max_price_index):
+    profit = 0
+
     if min_price_index < max_price_index:
-        # Define bottlenecks to control the charging or discharging process.
-        bottleneck_1 = min(capacity - charge_level, ramp_rate)
-        charge_level += bottleneck_1
-        bottleneck_2 = min(charge_level - min_charge_level, ramp_rate)
-        charge_level -= bottleneck_2
-        # Calculate profit based on trade prices, efficiency, and bottlenecks.
-        profit = (current_df.loc[max_price_index // 2, 'Price'] * bottleneck_2 * eff_1) - ((current_df.loc[min_price_index // 2, 'Price'] * bottleneck_1) / eff_2)
-        # Append trade details to the 'prices' list.
-        prices.append((min_price_index, current_df.loc[min_price_index // 2, 'Price'], max_price_index, current_df.loc[max_price_index // 2, 'Price'], profit, charge_level))
+        charge_amount = min(capacity - charge_level, ramp_rate_BM)
+        
+        if charge_amount > 0:
+            charge_level += charge_amount
+
+            discharge_amount = min(charge_level - min_charge_level, ramp_rate_BM)
+            if discharge_amount > 0:
+                charge_level -= discharge_amount
+                profit = (current_df_bm.loc[max_price_index, 'Price'] * discharge_amount * eff_1) - \
+                         ((current_df_bm.loc[min_price_index, 'Price'] * charge_amount) / eff_2)
+                
     elif min_price_index > max_price_index:
-        # Handle the case when min price index is greater than max price index.
-        bottleneck_2 = min(charge_level - min_charge_level, ramp_rate)
-        charge_level -= bottleneck_2
-        bottleneck_1 = min(capacity - charge_level, ramp_rate)
-        charge_level += bottleneck_1
-        profit = (current_df.loc[max_price_index // 2, 'Price'] * bottleneck_2 * eff_1) - ((current_df.loc[min_price_index // 2, 'Price'] * bottleneck_1) / eff_2)
-        prices.append((min_price_index, current_df.loc[min_price_index // 2, 'Price'], max_price_index, current_df.loc[max_price_index // 2, 'Price'], profit, charge_level))
+        discharge_amount = min(charge_level - min_charge_level, ramp_rate_BM)
+        
+        if discharge_amount > 0:
+            charge_level -= discharge_amount
+
+            charge_amount = min(capacity - charge_level, ramp_rate_BM)
+            if charge_amount > 0:
+                charge_level += charge_amount
+                profit = (current_df_bm.loc[max_price_index, 'Price'] * discharge_amount * eff_1) - \
+                         ((current_df_bm.loc[min_price_index, 'Price'] * charge_amount) / eff_2)
+                
+    if profit != 0:
+        prices.append((min_price_index, current_df_bm.loc[min_price_index, 'Price'], max_price_index, 
+                       current_df_bm.loc[max_price_index, 'Price'], profit, charge_level))
     return charge_level
 
-# Function to process BM market prices. Similar structure as process_prices_DAM but for BM market.
-# Note: In BM market, there is no price index division by 2.
-def process_prices_BM(charge_level, capacity, ramp_rate, min_charge_level, eff_1, eff_2, prices, current_df_bm, min_price_index, max_price_index):
+
+def process_prices_DAM(charge_level, capacity, ramp_rate_DAM, min_charge_level, eff_1, eff_2, prices, current_df, min_price_index, max_price_index):
+    # Initialize profit to zero for no-trade cases
+    profit = 0
+
     if min_price_index < max_price_index:
-        bottleneck_1 = min(capacity - charge_level, ramp_rate)
-        charge_level += bottleneck_1
-        bottleneck_2 = min(charge_level - min_charge_level, ramp_rate)
-        charge_level -= bottleneck_2
-        profit = (current_df_bm.loc[max_price_index, 'Price'] * bottleneck_2 * eff_1) - ((current_df_bm.loc[min_price_index, 'Price'] * bottleneck_1) / eff_2)
-        prices.append((min_price_index, current_df_bm.loc[min_price_index, 'Price'], max_price_index, current_df_bm.loc[max_price_index, 'Price'], profit, charge_level))
+        # Calculate the feasible charge amount
+        charge_amount = min(capacity - charge_level, ramp_rate_DAM)
+        
+        if charge_amount > 0:
+            charge_level += charge_amount
+            
+            # Calculate discharge if charge is above min_charge_level
+            discharge_amount = min(charge_level - min_charge_level, ramp_rate_DAM)
+            if discharge_amount > 0:
+                charge_level -= discharge_amount
+                # Profit calculation based on charge and discharge levels
+                profit = (current_df.loc[max_price_index // 2, 'Price'] * discharge_amount * eff_1) - \
+                         ((current_df.loc[min_price_index // 2, 'Price'] * charge_amount) / eff_2)
+                
     elif min_price_index > max_price_index:
-        bottleneck_2 = min(charge_level - min_charge_level, ramp_rate)
-        charge_level -= bottleneck_2
-        bottleneck_1 = min(capacity - charge_level, ramp_rate)
-        charge_level += bottleneck_1
-        profit = (current_df_bm.loc[max_price_index, 'Price'] * bottleneck_2 * eff_1) - ((current_df_bm.loc[min_price_index, 'Price'] * bottleneck_1) / eff_2)
-        prices.append((min_price_index, current_df_bm.loc[min_price_index, 'Price'], max_price_index, current_df_bm.loc[max_price_index, 'Price'], profit, charge_level))
+        discharge_amount = min(charge_level - min_charge_level, ramp_rate_DAM)
+        
+        if discharge_amount > 0:
+            charge_level -= discharge_amount
+
+            charge_amount = min(capacity - charge_level, ramp_rate_DAM)
+            if charge_amount > 0:
+                charge_level += charge_amount
+                profit = (current_df.loc[max_price_index // 2, 'Price'] * discharge_amount * eff_1) - \
+                         ((current_df.loc[min_price_index // 2, 'Price'] * charge_amount) / eff_2)
+                
+    if profit != 0:
+        prices.append((min_price_index, current_df.loc[min_price_index // 2, 'Price'], max_price_index, 
+                       current_df.loc[max_price_index // 2, 'Price'], profit, charge_level))
     return charge_level
 
-# Recursive function to explore possible trade pairs within identified price subsets.
-# The function iteratively identifies trade pairs within price data and tracks the state of the charge level.
-# It considers price data before, in-between, and after each trade pair, maximizing trading opportunities.
-def process_recursive_DAM(remaining_prices, charge_level, capacity, ramp_rate, min_charge_level, eff_1, eff_2, prices, current_df, remaining_prices_A, remaining_prices_B, level_0, current_Q_A, current_Q_B, Q_A_Preds, Q_B_Preds):
-    if len(remaining_prices) > 1:
+
+def process_recursive_DAM(remaining_prices, charge_level, capacity, ramp_rate_DAM, min_charge_level, eff_1, eff_2, prices, current_df, remaining_prices_A, remaining_prices_B, level_0, current_Q_A, current_Q_B, Q_A_Preds, Q_B_Preds, trades_today_DAM, max_trades_per_day_DAM, profit_threshold):
+    if len(remaining_prices) > 1 and trades_today_DAM < max_trades_per_day_DAM:
         max_price_index = remaining_prices['Price'].idxmax()
         min_price_index = remaining_prices['Price'].idxmin()
-        # Fetch max and min price indices.
         max_price_index = remaining_prices.loc[max_price_index, 'P_dam']
         min_price_index = remaining_prices.loc[min_price_index, 'P_dam']
         
-        # Check and execute DAM trading strategies as appropriate.        
-        if current_Q_B.loc[min_price_index / 2, 'Price'] < current_Q_A.loc[max_price_index / 2, 'Price']:
-            charge_level = process_prices_DAM(charge_level, capacity, ramp_rate, min_charge_level, eff_1, eff_2, prices, current_df, min_price_index, max_price_index)
+        # Calculate expected profit
+        expected_profit = (current_Q_A.loc[max_price_index / 2, 'Price'] * eff_1) - (current_Q_B.loc[min_price_index / 2, 'Price'] / eff_2)
+        
+        # Check if expected profit meets the threshold
+        if expected_profit >= profit_threshold:
+            charge_level = process_prices_DAM(charge_level, capacity, ramp_rate_DAM, min_charge_level, eff_1, eff_2, prices, current_df, min_price_index, max_price_index)
+            trades_today_DAM += 1
         else:
-            return charge_level  
-        # Continue recursively with smaller and larger indices.
-        # Prepare data subsets for the next iteration.
+            return charge_level, trades_today_DAM
+
+        # Continue with recursion for further trades
         smaller_index = min(min_price_index, max_price_index)
         larger_index = max(min_price_index, max_price_index)
         remaining_prices = current_df[(current_df['P_dam'] > smaller_index) & (current_df['P_dam'] < larger_index)]
         remaining_prices_A = Q_A_Preds[(Q_A_Preds['level_0'] == level_0) & (Q_A_Preds['P_dam'] > smaller_index) & (Q_A_Preds['P_dam'] < larger_index)]
         remaining_prices_B = Q_B_Preds[(Q_B_Preds['level_0'] == level_0) & (Q_B_Preds['P_dam'] > smaller_index) & (Q_B_Preds['P_dam'] < larger_index)]
 
-        charge_level = process_recursive_DAM(remaining_prices, charge_level, capacity, ramp_rate, min_charge_level, eff_1, eff_2, prices, current_df, remaining_prices_A, remaining_prices_B, level_0, current_Q_A, current_Q_B, Q_A_Preds, Q_B_Preds)
+        return process_recursive_DAM(remaining_prices, charge_level, capacity, ramp_rate_DAM, min_charge_level, eff_1, eff_2, prices, current_df, remaining_prices_A, remaining_prices_B, level_0, current_Q_A, current_Q_B, Q_A_Preds, Q_B_Preds, trades_today_DAM, max_trades_per_day_DAM, profit_threshold)
     
-    return charge_level
+    return charge_level, trades_today_DAM
 
 
+def process_recursive_bm(remaining_prices, charge_level, capacity, ramp_rate_BM, min_charge_level, eff_1, eff_2, prices, current_df_bm, remaining_prices_A, remaining_prices_B, level_0, current_Q_A_bm, current_Q_B_bm, Q_A_Preds_bm, Q_B_Preds_bm, trades_today_BM, max_trades_per_day_BM, profit_threshold):
+    if len(remaining_prices) > 1 and trades_today_BM < max_trades_per_day_BM:
+        max_price_index = remaining_prices['Price'].idxmax()
+        min_price_index = remaining_prices['Price'].idxmin()
 
-# Importantly, this code focuses on a dual markets approach, TS3-Dual, which optimizes trading decisions in both DAM and BM markets.
-# The DAM positions are determined earlier (t), while BM positions are established later (t+12). BM positions use an 8-hour ahead forecast.
-def dual_strat(df, df_bm, Q_A_Preds, Q_B_Preds, Q_A_Preds_bm, Q_B_Preds_bm,  eff_1, eff_2, capacity,charge_level, ramp_rate, min_charge_level):
-    prices = [] # Create an empty list to store trading results
-    charge_level = charge_level # Initialize the charge level.
+        # Calculate expected profit
+        expected_profit = (current_Q_A_bm.loc[max_price_index, 'Price'] * eff_1) - (current_Q_B_bm.loc[min_price_index, 'Price'] / eff_2)
+
+        # Check if expected profit meets the threshold
+        if expected_profit >= profit_threshold:
+            charge_level = process_prices_BM(charge_level, capacity, ramp_rate_BM, min_charge_level, eff_1, eff_2, prices, current_df_bm, min_price_index, max_price_index)
+            trades_today_BM += 1
+        else:
+            return charge_level, trades_today_BM
+
+        # Continue with recursion for further trades
+        smaller_index = min(min_price_index, max_price_index)
+        larger_index = max(min_price_index, max_price_index)
+        remaining_prices_A = Q_A_Preds_bm[(Q_A_Preds_bm['level_0'] == level_0) & (Q_A_Preds_bm.index > smaller_index) & (Q_A_Preds_bm.index < larger_index)]
+        remaining_prices_B = Q_B_Preds_bm[(Q_B_Preds_bm['level_0'] == level_0) & (Q_B_Preds_bm.index > smaller_index) & (Q_B_Preds_bm.index < larger_index)]
+
+        return process_recursive_bm(remaining_prices_A, charge_level, capacity, ramp_rate_BM, min_charge_level, eff_1, eff_2, prices, current_df_bm, remaining_prices_A, remaining_prices_B, level_0, current_Q_A_bm, current_Q_B_bm, Q_A_Preds_bm, Q_B_Preds_bm, trades_today_BM, max_trades_per_day_BM, profit_threshold)
     
-    # Get unique values of the 'level_0' column in the DAM dataset.
+    return charge_level, trades_today_BM
+
+
+
+
+
+def dual_strat(df, df_bm, Q_A_Preds, Q_B_Preds, Q_A_Preds_bm, Q_B_Preds_bm, eff_1, eff_2, capacity, charge_level, ramp_rate_DAM, ramp_rate_BM, min_charge_level, profit_threshold=0, max_trades_per_day_DAM=2, max_trades_per_day_BM=2):
+    prices = []
     level_0_values = df['level_0'].unique()
 
     for level_0 in level_0_values:
-        # Filter data for the current 'level_0' value in both DAM and BM datasets.
+        trades_today_DAM = 0  # Reset daily trade counter
+        trades_today_BM = 0  # Reset daily trade counter
         current_df = df[df['level_0'] == level_0]
         current_Q_A = Q_A_Preds[Q_A_Preds['level_0'] == level_0]
         current_Q_B = Q_B_Preds[Q_B_Preds['level_0'] == level_0]
         current_df_bm = df_bm[df_bm['level_0'] == level_0]
         current_Q_A_bm = Q_A_Preds_bm[Q_A_Preds_bm['level_0'] == level_0]
-        current_Q_B_bm = Q_B_Preds_bm[Q_B_Preds_bm['level_0'] == level_0]  
-        
-        # Find max and min price indices for DAM.
-        max_price_index = current_Q_A['Price'].idxmax()
-        min_price_index = current_Q_B['Price'].idxmin()        
-        max_price_index = current_Q_A.loc[max_price_index, 'P_dam']
-        min_price_index = current_Q_B.loc[min_price_index, 'P_dam']        
+        current_Q_B_bm = Q_B_Preds_bm[Q_B_Preds_bm['level_0'] == level_0]
 
-        # Determine smaller and larger price indices to create data subsets.
+        # DAM Trade Initialization
+        if not current_Q_A.empty and not current_Q_B.empty:
+            max_price_index = current_Q_A['Price'].idxmax()
+            min_price_index = current_Q_B['Price'].idxmin()
+            max_price_index = current_Q_A.loc[max_price_index, 'P_dam']
+            min_price_index = current_Q_B.loc[min_price_index, 'P_dam']
+        else:
+            continue  # Skip to the next iteration if data is missing
+
+        # Calculate Expected Profit for DAM Initial Trade
+        expected_profit_DAM = (current_Q_A.loc[max_price_index / 2, 'Price'] * eff_1) - (current_Q_B.loc[min_price_index / 2, 'Price'] / eff_2)
+        
+        if expected_profit_DAM >= profit_threshold:
+            charge_level = process_prices_DAM(charge_level, capacity, ramp_rate_DAM, min_charge_level, eff_1, eff_2, prices, current_df, min_price_index, max_price_index)
+            trades_today_DAM += 1
+        else:
+            continue
+
+        
+        # Recursive DAM Optimization
         smaller_index = min(min_price_index, max_price_index)
         larger_index = max(min_price_index, max_price_index)
-
-        # Split data into subsets based on price indices.
+        
+        # Recursive DAM Optimization with Profit Threshold       
         DAM_Intraday = current_df[(current_df['P_dam'] > smaller_index) & (current_df['P_dam'] < larger_index)]
         DAM_Intraday_Q1 = Q_A_Preds[(Q_A_Preds['level_0'] == level_0) & (Q_A_Preds['P_dam'] > smaller_index) & (Q_A_Preds['P_dam'] < larger_index)]
-        DAM_Intraday_Q2 = Q_B_Preds[(Q_B_Preds['level_0'] == level_0) & (Q_B_Preds['P_dam'] > smaller_index) & (Q_B_Preds['P_dam'] < larger_index)]
+        DAM_Intraday_Q2 = Q_B_Preds[(Q_B_Preds['level_0'] == level_0) & (Q_B_Preds['P_dam'] > smaller_index) & (Q_B_Preds['P_dam'] < larger_index)]        
+        if len(DAM_Intraday) > 1 and trades_today_DAM < max_trades_per_day_DAM:
+            charge_level, trades_today_DAM = process_recursive_DAM(DAM_Intraday, charge_level, capacity, ramp_rate_DAM, min_charge_level, eff_1, eff_2, prices, current_df, DAM_Intraday_Q1, DAM_Intraday_Q2, level_0, current_Q_A, current_Q_B, Q_A_Preds, Q_B_Preds, trades_today_DAM, max_trades_per_day_DAM, profit_threshold)
+
         
-        BM_after_DAM = current_df_bm[(current_df_bm.index > smaller_index) & (current_df_bm.index > larger_index)]
-        BM_after_DAM_Q1 = Q_A_Preds_bm[(Q_A_Preds_bm['level_0'] == level_0) & (Q_A_Preds_bm.index > smaller_index) & (Q_A_Preds_bm.index > larger_index)]
-        BM_after_DAM_Q2 = Q_B_Preds_bm[(Q_B_Preds_bm['level_0'] == level_0) & (Q_B_Preds_bm.index > smaller_index) & (Q_B_Preds_bm.index > larger_index)]
-        
+        # Ensure trade limit has not been reached
+        if (trades_today_DAM + trades_today_BM) >= (max_trades_per_day_DAM+max_trades_per_day_BM):
+            continue
+            
+            
+        # BM Trade Before DAM with Profit Threshold
         BM_before_DAM = current_df_bm[(current_df_bm.index < smaller_index) & (current_df_bm.index < larger_index)]
         BM_before_DAM_Q1 = Q_A_Preds_bm[(Q_A_Preds_bm['level_0'] == level_0) & (Q_A_Preds_bm.index < smaller_index) & (Q_A_Preds_bm.index < larger_index)]
         BM_before_DAM_Q2 = Q_B_Preds_bm[(Q_B_Preds_bm['level_0'] == level_0) & (Q_B_Preds_bm.index < smaller_index) & (Q_B_Preds_bm.index < larger_index)]
-        
-        
-        #DAM Initial Trade - dictates min max period for BM
-        if current_Q_B.loc[min_price_index/2, 'Price'] < current_Q_A.loc[max_price_index/2, 'Price']:
-            charge_level = process_prices_DAM(charge_level, capacity, ramp_rate, min_charge_level, eff_1, eff_2, prices, current_df, min_price_index, max_price_index)            
-        else:
+        if len(BM_before_DAM) > 1 and trades_today_BM < max_trades_per_day_BM:
+            charge_level, trades_today_BM = process_recursive_bm(BM_before_DAM, charge_level, capacity, ramp_rate_BM, min_charge_level, eff_1, eff_2, prices, current_df_bm, BM_before_DAM_Q1, BM_before_DAM_Q2, level_0, current_Q_A_bm, current_Q_B_bm, Q_A_Preds_bm, Q_B_Preds_bm, trades_today_BM, max_trades_per_day_BM, profit_threshold)
+
+                
+        # Ensure trade limit has not been reached
+        if (trades_today_DAM + trades_today_BM) >= (max_trades_per_day_DAM+max_trades_per_day_BM):
             continue
-                                     
-        #DAM Trade - optimising inbetween min max period                        
-        if len(DAM_Intraday) > 1:
-            charge_level = process_recursive_DAM(DAM_Intraday, charge_level, capacity, ramp_rate, min_charge_level, eff_1, eff_2, prices, current_df, DAM_Intraday_Q1, DAM_Intraday_Q2, level_0, current_Q_A, current_Q_B, Q_A_Preds, Q_B_Preds)
-        else:
-            continue
+            
+            
+        # BM Trade After DAM with Profit Threshold
+        BM_after_DAM = current_df_bm[(current_df_bm.index > smaller_index) & (current_df_bm.index > larger_index)]
+        BM_after_DAM_Q1 = Q_A_Preds_bm[(Q_A_Preds_bm['level_0'] == level_0) & (Q_A_Preds_bm.index > smaller_index) & (Q_A_Preds_bm.index > larger_index)]
+        BM_after_DAM_Q2 = Q_B_Preds_bm[(Q_B_Preds_bm['level_0'] == level_0) & (Q_B_Preds_bm.index > smaller_index) & (Q_B_Preds_bm.index > larger_index)]
+        if len(BM_after_DAM) > 1 and trades_today_BM < max_trades_per_day_BM:
+            charge_level, trades_today_BM = process_recursive_bm(BM_after_DAM, charge_level, capacity, ramp_rate_BM, min_charge_level, eff_1, eff_2, prices, current_df_bm, BM_after_DAM_Q1, BM_after_DAM_Q2, level_0, current_Q_A_bm, current_Q_B_bm, Q_A_Preds_bm, Q_B_Preds_bm, trades_today_BM, max_trades_per_day_BM, profit_threshold)
 
-#         if len(BM_before_DAM) > 1:
-#             charge_level = process_recursive_bm(BM_before_DAM, charge_level, capacity, ramp_rate, min_charge_level, eff_1, eff_2, prices, current_df_bm, BM_before_DAM_Q1, BM_before_DAM_Q2, level_0, current_Q_A_bm, current_Q_B_bm, Q_A_Preds_bm, Q_B_Preds_bm)
-#         else:
-#             continue 
-
-        #BM Trade in period before dam trades
-        if len(BM_before_DAM) > 1:
-                max_price_index_2 = BM_before_DAM_Q1['Price'].idxmax()
-                min_price_index_2 = BM_before_DAM_Q2['Price'].idxmin()
-                if current_Q_B_bm.loc[min_price_index_2, 'Price'] < current_Q_A_bm.loc[max_price_index_2, 'Price']:
-                    charge_level = process_prices_BM(charge_level, capacity, ramp_rate, min_charge_level, eff_1, eff_2, prices, current_df_bm, min_price_index_2, max_price_index_2)
-                else:
-                    continue                      
-
-#         if len(BM_after_DAM) > 1:
-#             charge_level = process_recursive_bm(BM_after_DAM, charge_level, capacity, ramp_rate, min_charge_level, eff_1, eff_2, prices, current_df_bm, BM_after_DAM_Q1, BM_after_DAM_Q2, level_0, current_Q_A_bm, current_Q_B_bm, Q_A_Preds_bm, Q_B_Preds_bm)
-#         else:
-#             continue 
-
-        # This section of code deals with trading in the period after the DAM trades.
-        # It checks for BM trades in the period after the DAM but before the specified limits.
-        if len(BM_after_DAM) > 1:
-                max_price_index_1 = BM_after_DAM_Q1['Price'].idxmax()
-                min_price_index_1 = BM_after_DAM_Q2['Price'].idxmin()
-                if current_Q_B_bm.loc[min_price_index_1, 'Price'] < current_Q_A_bm.loc[max_price_index_1, 'Price']:
-                    # If BM trade conditions are met, execute the BM trading process.
-                    charge_level = process_prices_BM(charge_level, capacity, ramp_rate, min_charge_level, eff_1, eff_2, prices, current_df_bm, min_price_index_1, max_price_index_1)
-                else:
-                    continue     
-
-    # The code iterates through different periods in DAM and BM markets, optimizing trading decisions.
-    # It also handles synchronization between DAM and BM markets to enhance trading efficiency.                    
+                
     return pd.DataFrame(prices, columns=['minPriceIndex', 'minPrice','maxPriceIndex', 'maxPrice', 'profit', 'charge Level'])
+
+
+
+
+
+
+
     
     
     
@@ -302,16 +351,16 @@ def calculate_trading_results_DS(Y_r_BM, Q_10_BM, Q_30_BM, Q_50_BM, Q_70_BM, Q_9
     eff_1 = 0.8
     eff_2 = 0.98
     
-
+    r_dam_bm_50_50=dual_strat(df=Y_r_DAM, df_bm=Y_r_BM, Q_A_Preds=Q_50_DAM, Q_B_Preds=Q_50_DAM, Q_A_Preds_bm=Q_50_BM, Q_B_Preds_bm=Q_50_BM, eff_1=0.8, eff_2=0.98, capacity=1,charge_level=0, ramp_rate_DAM=1, ramp_rate_BM=0.5, min_charge_level=0, profit_threshold=0, max_trades_per_day_DAM=2, max_trades_per_day_BM=2)
     
-    r_dam_bm_50_50=dual_strat(df=Y_r_DAM, df_bm=Y_r_BM, Q_A_Preds=Q_50_DAM, Q_B_Preds=Q_50_DAM, Q_A_Preds_bm=Q_50_BM, Q_B_Preds_bm=Q_50_BM, eff_1=0.8, eff_2=0.98, capacity=1,charge_level=1, ramp_rate=1, min_charge_level=0)
-    r_dam_bm_10_30=dual_strat(df=Y_r_DAM, df_bm=Y_r_BM, Q_A_Preds=Q_10_DAM, Q_B_Preds=Q_30_DAM, Q_A_Preds_bm=Q_10_BM, Q_B_Preds_bm=Q_30_BM, eff_1=0.8, eff_2=0.98, capacity=1,charge_level=1, ramp_rate=1, min_charge_level=0)
-    r_dam_bm_30_50=dual_strat(df=Y_r_DAM, df_bm=Y_r_BM, Q_A_Preds=Q_30_DAM, Q_B_Preds=Q_50_DAM, Q_A_Preds_bm=Q_30_BM, Q_B_Preds_bm=Q_50_BM, eff_1=0.8, eff_2=0.98, capacity=1,charge_level=1, ramp_rate=1, min_charge_level=0)
-    r_dam_bm_50_70=dual_strat(df=Y_r_DAM, df_bm=Y_r_BM, Q_A_Preds=Q_50_DAM, Q_B_Preds=Q_70_DAM, Q_A_Preds_bm=Q_50_BM, Q_B_Preds_bm=Q_70_BM, eff_1=0.8, eff_2=0.98, capacity=1,charge_level=1, ramp_rate=1, min_charge_level=0)
-    r_dam_bm_70_90=dual_strat(df=Y_r_DAM, df_bm=Y_r_BM, Q_A_Preds=Q_70_DAM, Q_B_Preds=Q_90_DAM, Q_A_Preds_bm=Q_70_BM, Q_B_Preds_bm=Q_90_BM, eff_1=0.8, eff_2=0.98, capacity=1,charge_level=1, ramp_rate=1, min_charge_level=0)
-    r_dam_bm_30_70=dual_strat(df=Y_r_DAM, df_bm=Y_r_BM, Q_A_Preds=Q_30_DAM, Q_B_Preds=Q_70_DAM, Q_A_Preds_bm=Q_30_BM, Q_B_Preds_bm=Q_70_BM, eff_1=0.8, eff_2=0.98, capacity=1,charge_level=1, ramp_rate=1, min_charge_level=0)
-    r_dam_bm_10_90=dual_strat(df=Y_r_DAM, df_bm=Y_r_BM, Q_A_Preds=Q_10_DAM, Q_B_Preds=Q_90_DAM, Q_A_Preds_bm=Q_10_BM, Q_B_Preds_bm=Q_90_BM, eff_1=0.8, eff_2=0.98, capacity=1,charge_level=1, ramp_rate=1, min_charge_level=0)
-    PF_dam_bm=dual_strat(df=Y_r_DAM, df_bm=Y_r_BM, Q_A_Preds=Y_r_DAM, Q_B_Preds=Y_r_DAM, Q_A_Preds_bm=Y_r_BM, Q_B_Preds_bm=Y_r_BM,          eff_1=0.8, eff_2=0.98, capacity=1,charge_level=1, ramp_rate=1, min_charge_level=0)
+    r_dam_bm_10_30=dual_strat(df=Y_r_DAM, df_bm=Y_r_BM, Q_A_Preds=Q_10_DAM, Q_B_Preds=Q_30_DAM, Q_A_Preds_bm=Q_10_BM, Q_B_Preds_bm=Q_30_BM, eff_1=0.8, eff_2=0.98, capacity=1,charge_level=0, ramp_rate_DAM=1, ramp_rate_BM=0.5, min_charge_level=0, profit_threshold=0, max_trades_per_day_DAM=2, max_trades_per_day_BM=2)
+    
+    r_dam_bm_30_50=dual_strat(df=Y_r_DAM, df_bm=Y_r_BM, Q_A_Preds=Q_30_DAM, Q_B_Preds=Q_50_DAM, Q_A_Preds_bm=Q_30_BM, Q_B_Preds_bm=Q_50_BM, eff_1=0.8, eff_2=0.98, capacity=1,charge_level=0, ramp_rate_DAM=1, ramp_rate_BM=0.5, min_charge_level=0, profit_threshold=0, max_trades_per_day_DAM=2, max_trades_per_day_BM=2)
+    r_dam_bm_50_70=dual_strat(df=Y_r_DAM, df_bm=Y_r_BM, Q_A_Preds=Q_50_DAM, Q_B_Preds=Q_70_DAM, Q_A_Preds_bm=Q_50_BM, Q_B_Preds_bm=Q_70_BM, eff_1=0.8, eff_2=0.98, capacity=1,charge_level=0, ramp_rate_DAM=1, ramp_rate_BM=0.5, min_charge_level=0, profit_threshold=0, max_trades_per_day_DAM=2, max_trades_per_day_BM=2)
+    r_dam_bm_70_90=dual_strat(df=Y_r_DAM, df_bm=Y_r_BM, Q_A_Preds=Q_70_DAM, Q_B_Preds=Q_90_DAM, Q_A_Preds_bm=Q_70_BM, Q_B_Preds_bm=Q_90_BM, eff_1=0.8, eff_2=0.98, capacity=1,charge_level=0, ramp_rate_DAM=1, ramp_rate_BM=0.5, min_charge_level=0, profit_threshold=0, max_trades_per_day_DAM=2, max_trades_per_day_BM=2)
+    r_dam_bm_30_70=dual_strat(df=Y_r_DAM, df_bm=Y_r_BM, Q_A_Preds=Q_30_DAM, Q_B_Preds=Q_70_DAM, Q_A_Preds_bm=Q_30_BM, Q_B_Preds_bm=Q_70_BM, eff_1=0.8, eff_2=0.98, capacity=1,charge_level=0, ramp_rate_DAM=1, ramp_rate_BM=0.5, min_charge_level=0, profit_threshold=0, max_trades_per_day_DAM=2, max_trades_per_day_BM=2)
+    r_dam_bm_10_90=dual_strat(df=Y_r_DAM, df_bm=Y_r_BM, Q_A_Preds=Q_10_DAM, Q_B_Preds=Q_90_DAM, Q_A_Preds_bm=Q_10_BM, Q_B_Preds_bm=Q_90_BM, eff_1=0.8, eff_2=0.98, capacity=1,charge_level=0, ramp_rate_DAM=1, ramp_rate_BM=0.5, min_charge_level=0, profit_threshold=0, max_trades_per_day_DAM=2, max_trades_per_day_BM=2)
+    PF_dam_bm     =dual_strat(df=Y_r_DAM, df_bm=Y_r_BM, Q_A_Preds=Y_r_DAM,  Q_B_Preds=Y_r_DAM,  Q_A_Preds_bm=Y_r_BM,  Q_B_Preds_bm=Y_r_BM,  eff_1=0.8, eff_2=0.98, capacity=1,charge_level=0, ramp_rate_DAM=1, ramp_rate_BM=0.5, min_charge_level=0, profit_threshold=0, max_trades_per_day_DAM=2, max_trades_per_day_BM=2)
     
     results = {
         'r_dam_bm_50_50': np.round(sum(r_dam_bm_50_50.iloc[:, 4:5].values), 2),
@@ -340,13 +389,23 @@ def print_results_DS(results):
 
          
   
-    
+# Example usage of loading data for the BM strategy
+file_path_bm = "/home/ciaran/Conformal_Prediction/BM/rf_Q_1-12.csv"
+# Load data for the BM strategy from the specified file path
+Y_r_BM, Q_10_BM, Q_30_BM, Q_50_BM, Q_70_BM, Q_90_BM = load_bm_data_DS(file_path_bm)
+
+# Example usage of loading data for the DAM strategy
+dam_csv_path = "/home/ciaran/Conformal_Prediction/DAM/rf_Q_DAM_1-12.csv"
+# Load data for the DAM strategy from the specified file path
+Y_r_DAM, Q_10_DAM, Q_30_DAM, Q_50_DAM, Q_70_DAM, Q_90_DAM = load_dam_data_DS(dam_csv_path)
+
 # Define the function to plot profit for a single trade in the BM strategy
-def plot_profit_Dual_Strategy_DAM_BM(Y_r_DAM, Y_r_BM, Q_A_Preds, Q_B_Preds, Q_A_Preds_bm, Q_B_Preds_bm, eff_1, eff_2, capacity,charge_level, ramp_rate, min_charge_level):
+def plot_profit_Dual_Strategy_DAM_BM(Y_r_DAM, Y_r_BM, Q_A_Preds, Q_B_Preds, Q_A_Preds_bm, Q_B_Preds_bm, eff_1, eff_2, capacity,charge_level, ramp_rate, min_charge_level, profit_threshold=0, max_trades_per_day_DAM=2, max_trades_per_day_BM=2):
+
     # Run electricity strategy for BM
-    HF_trade_dam = dual_strat(df=Y_r_DAM, df_bm=Y_r_BM, Q_A_Preds=Q_50_DAM, Q_B_Preds=Q_70_DAM, Q_A_Preds_bm=Q_50_BM, Q_B_Preds_bm=Q_70_BM, eff_1=0.8, eff_2=0.98, capacity=1,charge_level=1, ramp_rate=1, min_charge_level=0)
+    HF_trade_dam = dual_strat(df=Y_r_DAM, df_bm=Y_r_BM, Q_A_Preds=Q_50_DAM, Q_B_Preds=Q_70_DAM, Q_A_Preds_bm=Q_50_BM, Q_B_Preds_bm=Q_70_BM, eff_1=0.8, eff_2=0.98, capacity=1,charge_level=0, ramp_rate_DAM=1, ramp_rate_BM=0.5, min_charge_level=0, profit_threshold=0, max_trades_per_day_DAM=2, max_trades_per_day_BM=2)
     # Plot the profit obtained
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(15, 6))
     plt.plot(HF_trade_dam.iloc[:, 4:5].values, marker='o', linestyle='-', color='y', label='Profit')
     plt.title('Profit Obtained from High Frequency Strategy (TS3-DUAL)')
     plt.xlabel('Index')
